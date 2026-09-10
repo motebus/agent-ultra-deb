@@ -1,44 +1,40 @@
 # Agent Ultra
 
-`agent-ultra 0.1.0-1` owns the local Ultra infrastructure composition in the
-four-package Agent Sphere system: Redixs, local Comm with Telegram, Obsidian
-and the vault sync client/subsystem pair.
+`agent-ultra 0.1.0-1` composes local knowledge and communication infrastructure
+for an AGPC (Agent Computer). Its required dependencies are Agent Sphere
+`0.2.0-1`, Redixs `4.1.0-1`, Comm `1.0.0-1`, Obsidian `1.13.7`, Mote Vault Sync
+`1.1.0-3` and Mote Vault Syncd `1.1.0-3`. There are no Recommends or Suggests.
 
-This is an **unreleased composition candidate**. Redixs and Comm have approved
-component names, but their Debian versions and actual service artifacts remain
-explicit release gates. Existing OCI source is not a Debian runtime, and a
-successful metadata-only build does not establish working local communication.
-The manifest command refuses release until those leaf packages are real and
-their versions are fixed.
+The package owns documentation and `agentsphere-local.target`. This target
+wants `redixs.service` and `comm.service`, is ordered after `agentsphere.target`
+and is enabled for `multi-user.target`. Standard Debian systemd helpers
+(`init-system-helpers >= 1.54`) preserve owner disable and mask decisions.
+It does not require UltraOne or network-online to start. Owner configuration
+and current component health determine readiness; an active target alone does
+not establish storage, Telegram connectivity or provider availability.
 
-Required dependencies are Redixs, Comm, Obsidian `1.13.7`, Mote Vault Sync
-`1.1.0-3` and Mote Vault Syncd `1.1.0-3`. No `Recommends` or `Suggests` are used.
-The top-level plural installer requests Core, Ultra, Sphere Manager and Apps
-in one APT transaction. It obtains the unmodified official Obsidian amd64 DEB
-and checks the SHA-256 recorded in `dependency-contract.json`. MoteBus does
-not redistribute Obsidian.
+Redixs owns its bounded local persisted KV/table/cache/FIFO profile. Comm owns
+local communication and its owner-configured Telegram adapter. Their native
+packages own the executable, service, configuration and state; this composition
+adds no wrapper daemon, alternate transport identity or package manager.
 
-This metapackage contains documentation only, with no daemon, hook, executable,
-credentials, migration logic or configuration. It does not send a Telegram
-message, create a bot, configure an external provider, select or import a
-vault, or alter existing identities. Redixs and Comm own their native service
-lifecycle and admission; owner provisioning and live acceptance are separate
-from installation.
+Obsidian uses its exact official amd64 DEB, obtained and verified by the
+permanent plural `agent-sphere-apps.sh` installer in the same four-entry APT
+transaction. MoteBus does not rehost it. The contract records its upstream
+version and SHA-256. Vault Sync remains the separate native client and SSH
+subsystem pair; installation does not select or copy an existing vault.
 
-Core is headless and contains AGOS, Codex Mesh, model execution and Mote.
-Sphere Manager provides the separate native TUI/CLI backed by MEdge. Apps owns
-Jujue, iAgent and desktop applications. Removing this meta removes only its
-documentation; deleting runtime components or data requires a separate
-reviewed removal plan.
+Removing this package removes its target and documentation. It does not
+remove dependency packages, owner configuration or data. No implicit purge or
+autoremove is performed. Complete product removal needs the separately
+reviewed component lifecycle and data-preservation plan.
 
-Local review:
+Exact main artifacts, signed aggregate resolution and native lifecycle checks
+are required before distribution. No metadata-only fixture or version floor
+establishes operational readiness. Source validation:
 
 ```sh
 python3 scripts/package.py build
 python3 scripts/package.py compatibility
 python3 -m unittest discover -s tests -v
 ```
-
-The signed four-package aggregate and actual native host checks must pass
-before activation. No partial installation or fake provider is an acceptable
-substitute for the unresolved native services.

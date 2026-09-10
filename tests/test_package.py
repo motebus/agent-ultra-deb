@@ -16,14 +16,11 @@ class PackageTests(unittest.TestCase):
 
     def test_exact_local_ultra_boundary_and_external_obsidian(self):
         report=package.compatibility()
-        self.assertEqual(set(report['dependencies']),{'redixs','comm','obsidian','mote-vault-sync','mote-vault-syncd'})
-        self.assertEqual(set(report['native_release_gates']),{'redixs','comm'})
+        self.assertEqual(set(report['dependencies']),{'agent-sphere','redixs','comm','obsidian','mote-vault-sync','mote-vault-syncd','init-system-helpers'})
+        self.assertEqual(report['dependencies']['redixs'],'4.1.0-1')
+        self.assertEqual(report['dependencies']['comm'],'1.0.0-1')
         self.assertFalse(report['external_provisioning']['obsidian']['rehost_on_motebus'])
         self.assertFalse(report['installable']);self.assertFalse(report['readiness'])
-
-    def test_native_missing_artifacts_block_release_manifest(self):
-        with tempfile.TemporaryDirectory(dir=ROOT/'build') as temporary:
-            with self.assertRaisesRegex(ValueError,'actual Redixs and Comm'):package.manifest(Path(temporary))
 
     def test_fake_aliases_manager_or_wrong_owner_cannot_enter_apps(self):
         for field,value in [('Provides','comm'),('Recommends','sphere-manager'),('Suggests','model-node'),
@@ -33,12 +30,12 @@ class PackageTests(unittest.TestCase):
             with self.subTest(field=field,value=value),mock.patch.object(package,'control',return_value=altered):
                 with self.assertRaises(ValueError):package.check_control(altered)
 
-    def test_reproducible_documentation_only_artifact(self):
+    def test_reproducible_declarative_target_artifact(self):
         with tempfile.TemporaryDirectory(dir=ROOT/'build') as temporary:
             first=package.build(Path(temporary)/'a');second=package.build(Path(temporary)/'b')
             self.assertEqual(first.read_bytes(),second.read_bytes())
 
-    def test_hooks_fake_runtime_and_configuration_are_rejected(self):
+    def test_modified_hooks_fake_runtime_and_configuration_are_rejected(self):
         for extra in ['DEBIAN/postinst','usr/bin/comm','etc/agent-ultra.conf']:
             with self.subTest(extra=extra),tempfile.TemporaryDirectory(dir=ROOT/'build') as temporary:
                 base=Path(temporary);original=package.build(base/'clean');stage=base/'stage'

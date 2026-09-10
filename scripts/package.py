@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and audit the documentation-only Agent Ultra composition package."""
+"""Build and audit the declarative systemd target Agent Ultra composition package."""
 import argparse
 import hashlib
 import io
@@ -14,13 +14,12 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = "0.1.0-1"
-DEPENDENCIES = {'redixs': None,
- 'comm': None,
- 'obsidian': '1.13.7',
- 'mote-vault-sync': '1.1.0-3',
- 'mote-vault-syncd': '1.1.0-3'}
+DEPENDENCIES = {'agent-sphere': '0.2.0-1', 'redixs': '4.1.0-1', 'comm': '1.0.0-1', 'obsidian': '1.13.7', 'mote-vault-sync': '1.1.0-3', 'mote-vault-syncd': '1.1.0-3', 'init-system-helpers': '1.54'}
 DOC = "usr/share/doc/agent-ultra/"
-PAYLOAD = {DOC + "README.md", DOC + "copyright"}
+TARGET = "usr/lib/systemd/system/agentsphere-local.target"
+SOURCES = {DOC + "README.md": "README.md", DOC + "copyright": "packaging/copyright", TARGET: "packaging/agentsphere-local.target"}
+PAYLOAD = set(SOURCES)
+HOOKS = {"postinst", "prerm", "postrm"}
 
 
 def git(*args):
@@ -73,7 +72,7 @@ def compatibility():
         raise ValueError("unbuilt native infrastructure dependencies must remain explicit")
     if contract["installable"] is not False or contract["readiness"] is not False:
         raise ValueError("composition metadata cannot establish installation or runtime readiness")
-    if set(DEPENDENCIES) != {"redixs", "comm", "obsidian", "mote-vault-sync", "mote-vault-syncd"}:
+    if set(DEPENDENCIES) != {'obsidian', 'init-system-helpers', 'mote-vault-syncd', 'mote-vault-sync', 'agent-sphere', 'comm', 'redixs'}:
         raise ValueError("wrong Ultra ownership boundary")
     external = contract["external_provisioning"]["obsidian"]
     if (external["version"] != "1.13.7" or external["architecture"] != "amd64" or
@@ -89,13 +88,30 @@ def archive(path, flag):
 
 def verify(path):
     with archive(path, "--ctrl-tarfile") as arc:
-        files = [m for m in arc if not m.isdir()]
-        if len(files) != 1 or files[0].name.removeprefix("./") != "control" or not files[0].isfile():
-            raise ValueError("control archive must contain only control; hooks are forbidden")
-        check_control(fields(arc.extractfile(files[0]).read().decode()))
+        seen = set()
+        for member in arc:
+            name = member.name.removeprefix("./").rstrip("/")
+            if member.uid != 0 or member.gid != 0:
+                raise ValueError("control member is not root-owned")
+            if member.isdir():
+                if name not in {"", "."} or member.mode != 0o755:
+                    raise ValueError("unexpected control directory")
+                continue
+            if not member.isfile() or name not in HOOKS | {"control"} or name in seen:
+                raise ValueError("unexpected control payload")
+            if member.mode != (0o644 if name == "control" else 0o755):
+                raise ValueError("wrong control permissions")
+            contents = arc.extractfile(member).read()
+            if name == "control":
+                check_control(fields(contents.decode()))
+            elif contents != (ROOT / "packaging" / name).read_bytes():
+                raise ValueError("native target hook differs from reviewed source")
+            seen.add(name)
+        if seen != HOOKS | {"control"}:
+            raise ValueError("incomplete native target lifecycle")
     with archive(path, "--fsys-tarfile") as arc:
         files = set()
-        allowed_dirs = {"", "usr", "usr/share", "usr/share/doc", "usr/share/doc/agent-ultra"}
+        allowed_dirs = {"", "usr", "usr/share", "usr/share/doc", "usr/share/doc/agent-ultra", "usr/lib", "usr/lib/systemd", "usr/lib/systemd/system"}
         for member in arc:
             name = member.name.removeprefix("./").rstrip("/")
             name = "" if name == "." else name
@@ -107,7 +123,7 @@ def verify(path):
             else:
                 if not member.isfile() or name not in PAYLOAD or member.mode != 0o644 or name in files:
                     raise ValueError("unexpected payload or permission: " + name)
-                source = ROOT / ("README.md" if name.endswith("README.md") else "packaging/copyright")
+                source = ROOT / SOURCES[name]
                 if arc.extractfile(member).read() != source.read_bytes():
                     raise ValueError("documentation bytes differ: " + name)
                 files.add(name)
@@ -127,10 +143,14 @@ def build(out):
         docs = stage / DOC
         docs.mkdir(parents=True)
         shutil.copyfile(ROOT / "packaging/control", stage / "DEBIAN/control")
-        shutil.copyfile(ROOT / "README.md", docs / "README.md")
-        shutil.copyfile(ROOT / "packaging/copyright", docs / "copyright")
+        for target, source in SOURCES.items():
+            destination = stage / target
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / source, destination)
+        for hook in HOOKS:
+            shutil.copyfile(ROOT / "packaging" / hook, stage / "DEBIAN" / hook)
         for path in [stage, *stage.rglob("*")]:
-            path.chmod(0o755 if path.is_dir() else 0o644)
+            path.chmod(0o755 if path.is_dir() or (path.parent.name == "DEBIAN" and path.name in HOOKS) else 0o644)
             os.utime(path, (epoch, epoch))
         result = out / ("agent-ultra_" + meta["Version"] + "_all.deb")
         subprocess.run(["dpkg-deb", "--build", "--root-owner-group", "-Zxz", "-z9",

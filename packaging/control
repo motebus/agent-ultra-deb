@@ -5,8 +5,8 @@ Section: metapackages
 Priority: optional
 Maintainer: MoteBus Engineering <engineering@ypcloud.com>
 Homepage: https://github.com/motebus/agent-ultra-deb
-Depends: redixs, comm, obsidian (>= 1.13.7), mote-vault-sync (>= 1.1.0-3), mote-vault-syncd (>= 1.1.0-3)
+Depends: agent-sphere (>= 0.2.0-1), redixs (>= 4.1.0-1), comm (>= 1.0.0-1), obsidian (>= 1.13.7), mote-vault-sync (>= 1.1.0-3), mote-vault-syncd (>= 1.1.0-3), init-system-helpers (>= 1.54)
 Description: Local Ultra infrastructure for Agent Sphere
  Composes Redixs, local Comm with Telegram, Obsidian and vault sync.
  Native service artifacts, owner identity and credentials must be provided
- before activation. The metapackage contains documentation only.
+ before activation. The package owns its declarative local startup target.

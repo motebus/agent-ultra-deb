@@ -1,0 +1,7 @@
+[Unit]
+Description=Agent Sphere local Ultra infrastructure
+Wants=redixs.service comm.service
+After=agentsphere.target
+
+[Install]
+WantedBy=multi-user.target

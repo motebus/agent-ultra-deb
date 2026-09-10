@@ -3,18 +3,17 @@
   "package": "agent-ultra",
   "version": "0.1.0-1",
   "dependencies": {
-    "redixs": null,
-    "comm": null,
+    "agent-sphere": "0.2.0-1",
+    "redixs": "4.1.0-1",
+    "comm": "1.0.0-1",
     "obsidian": "1.13.7",
     "mote-vault-sync": "1.1.0-3",
-    "mote-vault-syncd": "1.1.0-3"
+    "mote-vault-syncd": "1.1.0-3",
+    "init-system-helpers": "1.54"
   },
   "recommends": [],
   "suggests": [],
-  "native_release_gates": {
-    "redixs": "owner-built-deb-version-and-artifact-required",
-    "comm": "owner-built-deb-version-and-artifact-required"
-  },
+  "native_release_gates": {},
   "installable": false,
   "readiness": false,
   "composition_role": "local-ultra-infrastructure",
