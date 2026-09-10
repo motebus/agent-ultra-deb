@@ -1,0 +1,31 @@
+{
+  "schema": "agent-ultra-dependency-contract/v1",
+  "package": "agent-ultra",
+  "version": "0.1.0-1",
+  "dependencies": {
+    "redixs": null,
+    "comm": null,
+    "obsidian": "1.13.7",
+    "mote-vault-sync": "1.1.0-3",
+    "mote-vault-syncd": "1.1.0-3"
+  },
+  "recommends": [],
+  "suggests": [],
+  "native_release_gates": {
+    "redixs": "owner-built-deb-version-and-artifact-required",
+    "comm": "owner-built-deb-version-and-artifact-required"
+  },
+  "installable": false,
+  "readiness": false,
+  "composition_role": "local-ultra-infrastructure",
+  "external_provisioning": {
+    "obsidian": {
+      "source": "official-upstream-deb",
+      "version": "1.13.7",
+      "architecture": "amd64",
+      "sha256": "17dc33b49cb3e785ecc27edd2ea0c79e40207798b554fd2886e36ebee7af9ae0",
+      "rehost_on_motebus": false,
+      "acquisition_owner": "agent-sphere-apps.sh"
+    }
+  }
+}
