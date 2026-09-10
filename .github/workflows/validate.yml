@@ -1,0 +1,36 @@
+name: Validate Agent Ultra composition
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-ultra-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Build and audit composition and joint dependency plans
+        run: |
+          python3 scripts/package.py build
+          python3 scripts/package.py compatibility
+          python3 -m unittest discover -s tests -v
+          python3 scripts/package.py manifest
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: agent-ultra-review-build
+          path: |
+            dist/agent-ultra_0.1.0-1_all.deb
+            dist/release-manifest.json
+            dist/SHA256SUMS
+          if-no-files-found: error
