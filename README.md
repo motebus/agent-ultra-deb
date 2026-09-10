@@ -19,7 +19,7 @@ packages own the executable, service, configuration and state; this composition
 adds no wrapper daemon, alternate transport identity or package manager.
 
 Obsidian uses its exact official amd64 DEB, obtained and verified by the
-permanent plural `agent-sphere-apps.sh` installer in the same four-entry APT
+canonical `agpc.sh` installer in the same four-entry APT
 transaction. MoteBus does not rehost it. The contract records its upstream
 version and SHA-256. Vault Sync remains the separate native client and SSH
 subsystem pair; installation does not select or copy an existing vault.
